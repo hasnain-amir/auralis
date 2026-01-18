@@ -1,51 +1,40 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { inboxAdd } from "./lib/inbox";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+export default function App() {
+  const [text, setText] = useState("");
+  const [lastId, setLastId] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  async function onAdd() {
+    setErr(null);
+    try {
+      const id = await inboxAdd(text, "text");
+      setLastId(id);
+      setText("");
+    } catch (e: any) {
+      setErr(String(e));
+    }
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <div style={{ padding: 16 }}>
+      <h1>Auralis</h1>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
+      <div style={{ display: "flex", gap: 8 }}>
         <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Add to inbox…"
+          style={{ flex: 1, padding: 8 }}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        <button onClick={onAdd} style={{ padding: "8px 12px" }}>
+          Add
+        </button>
+      </div>
+
+      {lastId && <p>Inserted: {lastId}</p>}
+      {err && <p style={{ color: "crimson" }}>{err}</p>}
+    </div>
   );
 }
-
-export default App;

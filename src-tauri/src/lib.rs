@@ -1,3 +1,4 @@
+mod commands;
 mod db;
 
 use tauri::Manager;
@@ -22,7 +23,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, commands::inbox::inbox_add])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
