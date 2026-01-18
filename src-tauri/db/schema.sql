@@ -128,3 +128,66 @@ CREATE TABLE IF NOT EXISTS calendar_events (
 
     CHECK (end_at > start_at)
 );
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_start
+    ON calendar_events(start_at);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_task
+    ON calendar_events(task_id);
+
+
+-- RULE ENFORCEMENT TRIGGERS
+
+CREATE TRIGGER IF NOT EXISTS trg_projects_prevent_active_without_next_action
+BEFORE UPDATE OF status ON projects
+FOR EACH ROW
+WHEN NEW.status = 'active'
+  AND (SELECT COUNT(1)
+       FROM tasks
+       WHERE project_id = NEW.id
+         AND status IN ('todo', 'doing')) = 0
+BEGIN
+  SELECT RAISE(ABORT, 'Cannot activate project without an open task (next action required).');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_projects_prevent_active_on_insert_without_next_action
+BEFORE INSERT ON projects
+FOR EACH ROW
+WHEN NEW.status = 'active'
+BEGIN
+  SELECT RAISE(ABORT, 'Cannot create an active project without an open task. Create the project as paused, then add a task and activate.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_tasks_prevent_closing_last_open_task_in_active_project
+BEFORE UPDATE OF status ON tasks
+FOR EACH ROW
+WHEN OLD.project_id IS NOT NULL
+  AND OLD.status IN ('todo', 'doing')
+  AND NEW.status IN ('done', 'deferred')
+  AND (SELECT status FROM projects WHERE id = OLD.project_id) = 'active'
+  AND (SELECT COUNT(1)
+       FROM tasks
+       WHERE project_id = OLD.project_id
+         AND status IN ('todo', 'doing')
+         AND id != OLD.id) = 0
+BEGIN
+  SELECT RAISE(ABORT, 'Active project must keep at least one open task. Add a next action or pause/complete the project first.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_tasks_prevent_deleting_last_open_task_in_active_project
+BEFORE DELETE ON tasks
+FOR EACH ROW
+WHEN OLD.project_id IS NOT NULL
+  AND OLD.status IN ('todo', 'doing')
+  AND (SELECT status FROM projects WHERE id = OLD.project_id) = 'active'
+  AND (SELECT COUNT(1)
+       FROM tasks
+       WHERE project_id = OLD.project_id
+         AND status IN ('todo', 'doing')
+         AND id != OLD.id) = 0
+BEGIN
+  SELECT RAISE(ABORT, 'Cannot delete last open task in an active project. Add a next action or pause/complete the project first.');
+END;
+
+-- SEED DEFAULTS
+INSERT OR IGNORE INTO areas (id, name, active)
+VALUES ('area_admin_life', 'Admin / Life', 1);
