@@ -105,3 +105,26 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
+-- CALENDAR
+CREATE TABLE IF NOT EXISTS calendar_events (
+    id          TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    start_at    TEXT NOT NULL,
+    end_at      TEXT NOT NULL,
+    type        TEXT NOT NULL DEFAULT 'event' CHECK (type IN ('event', 'block')),
+    task_id     TEXT,
+    area_id     TEXT,
+    location    TEXT,
+    recurrence  TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+
+    FOREIGN KEY (task_id) REFERENCES tasks(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
+    FOREIGN KEY (area_id) REFERENCES areas(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
+    CHECK (end_at > start_at)
+);
