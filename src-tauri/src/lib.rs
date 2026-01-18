@@ -23,7 +23,11 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, commands::inbox::inbox_add])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            commands::inbox::inbox_add,
+            commands::inbox::inbox_list
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
