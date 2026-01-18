@@ -74,26 +74,58 @@ pub async fn inbox_list(db: State<'_, Db>) -> Result<Vec<InboxItem>, String> {
 }
 
 #[tauri::command]
-pub async fn inbox_set_state(
+pub async fn inbox_list(
     db: State<'_, Db>,
-    id: String,
-    state: String, // "unprocessed" | "processed" | "archived"
-) -> Result<(), String> {
-    if state != "unprocessed" && state != "processed" && state != "archived" {
-        return Err("Invalid state".into());
-    }
-
+    state: Option<String>,
+) -> Result<Vec<InboxItem>, String> {
     let conn = db.0.lock().await;
-    let updated = conn
-        .execute(
-            "UPDATE inbox_items SET state = ?1 WHERE id = ?2",
-            params![state, id],
-        )
-        .map_err(|e| e.to_string())?;
 
-    if updated == 0 {
-        return Err("Inbox item not found".into());
+    let (sql, param_state) = match state {
+        Some(s) => (
+            "SELECT id, content, source, state, created_at
+             FROM inbox_items
+             WHERE state = ?1
+             ORDER BY created_at DESC",
+            Some(s),
+        ),
+        None => (
+            "SELECT id, content, source, state, created_at
+             FROM inbox_items
+             ORDER BY created_at DESC",
+            None,
+        ),
+    };
+
+    let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+
+    let rows = match param_state {
+        Some(s) => stmt
+            .query_map([s], |row| {
+                Ok(InboxItem {
+                    id: row.get(0)?,
+                    content: row.get(1)?,
+                    source: row.get(2)?,
+                    state: row.get(3)?,
+                    created_at: row.get(4)?,
+                })
+            })
+            .map_err(|e| e.to_string())?,
+        None => stmt
+            .query_map([], |row| {
+                Ok(InboxItem {
+                    id: row.get(0)?,
+                    content: row.get(1)?,
+                    source: row.get(2)?,
+                    state: row.get(3)?,
+                    created_at: row.get(4)?,
+                })
+            })
+            .map_err(|e| e.to_string())?,
+    };
+
+    let mut items = Vec::new();
+    for r in rows {
+        items.push(r.map_err(|e| e.to_string())?);
     }
-
-    Ok(())
+    Ok(items)
 }
