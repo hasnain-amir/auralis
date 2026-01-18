@@ -19,10 +19,39 @@ CREATE TABLE IF NOT EXISTS projects (
     goal        TEXT,
     deadline_at TEXT,
     priority    TEXT CHECK (priority IN ('low', 'normal', 'high') OR priority IS NULL),
-    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     completed_at TEXT,
 
     FOREIGN KEY (area_id) REFERENCES areas(id)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_proijects_area_name
+    ON projects(area_id, name);
+
+-- TASKS
+CREATE TABLE IF NOT EXISTS tasks (
+    id          TEXT PRIMARY KEY,
+    area_id     TEXT NOT NULL,
+    project_id  TEXT,
+    title       TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'todo' CHECK (status IN ('todo', 'doing', 'done', 'deferred')),
+    priority    TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
+    due_at      TEXT,
+    scheduled_at TEXT,
+    estimate_minutes INTEGER CHECK (estimate_minutes >= 0 OR estimate_minutes IS NULL),
+    notes       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    completed_at TEXT,
+
+  FOREIGN KEY (area_id) REFERENCES areas(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+
+  FOREIGN KEY (project_id) REFERENCES projects(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+);
+
+
