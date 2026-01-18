@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { inboxAdd, inboxList, type InboxItem } from "./lib/inbox";
+import { inboxAdd, inboxList, inboxSetState, type InboxItem } from "./lib/inbox";
 
 export default function App() {
   const [text, setText] = useState("");
@@ -81,14 +81,34 @@ export default function App() {
             </div>
           ) : (
             items.map((it) => (
-              <div key={it.id} style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}>
-                <div style={{ fontSize: 12, color: "#777", display: "flex", gap: 10 }}>
-                  <span>{it.source}</span>
-                  <span>•</span>
-                  <span>{new Date(it.created_at).toLocaleString()}</span>
-                </div>
-                <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{it.content}</div>
-              </div>
+  <div key={it.id} style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+      <div style={{ fontSize: 12, color: "#777", display: "flex", gap: 10 }}>
+        <span>{it.source}</span>
+        <span>•</span>
+        <span>{new Date(it.created_at).toLocaleString()}</span>
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={async () => {
+            setErr(null);
+            try {
+              await inboxSetState(it.id, "archived");
+              await refresh();
+            } catch (e: any) {
+              setErr(String(e));
+            }
+          }}
+          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" }}
+        >
+          Archive
+        </button>
+      </div>
+    </div>
+
+    <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{it.content}</div>
+  </div>
             ))
           )}
         </div>

@@ -26,7 +26,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             commands::inbox::inbox_add,
-            commands::inbox::inbox_list
+            commands::inbox::inbox_list,
+            commands::inbox::inbox_set_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

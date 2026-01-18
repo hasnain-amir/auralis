@@ -72,3 +72,28 @@ pub async fn inbox_list(db: State<'_, Db>) -> Result<Vec<InboxItem>, String> {
 
     Ok(items)
 }
+
+#[tauri::command]
+pub async fn inbox_set_state(
+    db: State<'_, Db>,
+    id: String,
+    state: String, // "unprocessed" | "processed" | "archived"
+) -> Result<(), String> {
+    if state != "unprocessed" && state != "processed" && state != "archived" {
+        return Err("Invalid state".into());
+    }
+
+    let conn = db.0.lock().await;
+    let updated = conn
+        .execute(
+            "UPDATE inbox_items SET state = ?1 WHERE id = ?2",
+            params![state, id],
+        )
+        .map_err(|e| e.to_string())?;
+
+    if updated == 0 {
+        return Err("Inbox item not found".into());
+    }
+
+    Ok(())
+}

@@ -18,3 +18,7 @@ export function inboxAdd(content: string, source: InboxSource = "text") {
 export function inboxList() {
   return invoke<InboxItem[]>("inbox_list");
 }
+
+export function inboxSetState(id: string, state: InboxState) {
+  return invoke<void>("inbox_set_state", { id, state });
+}
