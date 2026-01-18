@@ -18,8 +18,8 @@ export type TaskItem = {
 export function taskAdd(title: string, areaId?: string, projectId?: string) {
   return invoke<string>("task_add", {
     title,
-    areaId: areaId ?? null,
-    projectId: projectId ?? null,
+    area_id: areaId ?? null,
+    project_id: projectId ?? null,
   });
 }
 
