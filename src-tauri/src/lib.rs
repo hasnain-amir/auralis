@@ -27,7 +27,10 @@ pub fn run() {
             greet,
             commands::inbox::inbox_add,
             commands::inbox::inbox_list,
-            commands::inbox::inbox_set_state
+            commands::inbox::inbox_set_state,
+            commands::tasks::task_add,
+            commands::tasks::task_list,
+            commands::tasks::task_set_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
