@@ -19,7 +19,7 @@ fn db_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 pub fn init_db(app: &tauri::AppHandle) -> Result<Db, String> {
     let path = db_path(app)?;
 
-    let mut conn =
+    let conn =
         Connection::open(&path).map_err(|e| format!("Failed to open DB at {:?}: {e}", path))?;
 
     conn.pragma_update(None, "foreign_keys", "ON")

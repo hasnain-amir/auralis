@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS projects (
     ON DELETE RESTRICT
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_proijects_area_name
+CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_area_name
     ON projects(area_id, name);
 
 -- TASKS
@@ -69,12 +69,29 @@ CREATE INDEX IF NOT EXISTS idx_tasks_scheduled_at
 -- INBOX
 CREATE TABLE IF NOT EXISTS inbox_items (
     id          TEXT PRIMARY KEY,
-    title       TEXT NOT NULL,
     content     TEXT NOT NULL,
-    area_id     TEXT,
-    project_id  TEXT,
+    source      TEXT NOT NULL CHECK (source IN ('text', 'voice')),
+    state       TEXT NOT NULL DEFAULT 'unprocessed'
+                           CHECK (state IN ('unprocessed', 'processed', 'archived')),
+    audio_path  TEXT,
+    transcript_confidence REAL
+      CHECK ((transcript_confidence >= 0.0 AND transcript_confidence <= 1.0)
+             OR transcript_confidence IS NULL),
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+);
+
+CREATE INDEX IF NOT EXISTS idx_inbox_state_created
+  ON inbox_items(state, created_at);
+
+-- NOTES
+CREATE TABLE IF NOT EXISTS notes (
+    id         TEXT PRIMARY KEY,
+    title      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    area_id    TEXT,
+    project_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     FOREIGN KEY (area_id) REFERENCES areas(id)
         ON UPDATE CASCADE
@@ -85,17 +102,10 @@ CREATE TABLE IF NOT EXISTS inbox_items (
         ON DELETE SET NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_notes_updated_at ON notes(updated_at);
+CREATE INDEX IF NOT EXISTS idx_notes_area ON notes(area_id);
+CREATE INDEX IF NOT EXISTS idx_notes_project ON notes(project_id);
 
-CREATE INDEX IF NOT EXISTS idx_notes_updated_at
-  ON notes(updated_at);
-
-CREATE INDEX IF NOT EXISTS idx_notes_area
-  ON notes(area_id);
-
-CREATE INDEX IF NOT EXISTS idx_notes_project
-  ON notes(project_id);
-
--- Keep updated_at current
 CREATE TRIGGER IF NOT EXISTS trg_notes_touch_updated_at
 AFTER UPDATE OF title, content, area_id, project_id ON notes
 FOR EACH ROW
