@@ -16,9 +16,13 @@ export function inboxAdd(content: string, source: InboxSource = "text") {
 }
 
 export function inboxList(state?: InboxState) {
-  return invoke<InboxItem[]>("inbox_list", { state });
+  return invoke<InboxItem[]>("inbox_list", { state: state ?? null });
 }
 
 export function inboxSetState(id: string, state: InboxState) {
   return invoke<void>("inbox_set_state", { id, state });
+}
+
+export function inboxConvertToTask(inboxId: string) {
+  return invoke<string>("inbox_convert_to_task", { inboxId });
 }
