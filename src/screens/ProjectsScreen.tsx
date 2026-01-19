@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   projectAdd,
   projectList,
@@ -19,7 +20,8 @@ export default function ProjectsScreen() {
   async function refresh(next: Filter = filter) {
     setErr(null);
     try {
-      const res = next === "all" ? await projectList() : await projectList(next);
+      const res =
+        next === "all" ? await projectList() : await projectList(next);
       setItems(res);
     } catch (e: any) {
       setErr(String(e));
@@ -38,7 +40,7 @@ export default function ProjectsScreen() {
     setLoading(true);
     setErr(null);
     try {
-      await projectAdd(v); // defaults to Admin/Life area on backend
+      await projectAdd(v); // defaults to Admin/Life area
       setName("");
       setFilter("paused");
       await refresh("paused");
@@ -55,7 +57,7 @@ export default function ProjectsScreen() {
       await projectSetStatus(id, status);
       await refresh();
     } catch (e: any) {
-      // If you activate without an open task, your DB trigger will error here.
+      // DB trigger errors (e.g. activating without open task) land here
       setErr(String(e));
     }
   }
@@ -65,24 +67,42 @@ export default function ProjectsScreen() {
       <h1 style={{ margin: "0 0 12px" }}>Projects</h1>
       {err && <p style={{ color: "crimson" }}>{err}</p>}
 
+      {/* Add project */}
       <div style={{ display: "flex", gap: 8 }}>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Add a project…"
-          style={{ flex: 1, padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            flex: 1,
+            padding: 10,
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
           onKeyDown={(e) => e.key === "Enter" && onAdd()}
         />
         <button
           onClick={onAdd}
           disabled={loading}
-          style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
         >
           {loading ? "…" : "Add"}
         </button>
       </div>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
+      {/* Filter */}
+      <div
+        style={{
+          marginTop: 10,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
         <span style={{ fontSize: 12, color: "#666" }}>View</span>
         <select
           value={filter}
@@ -91,7 +111,11 @@ export default function ProjectsScreen() {
             setFilter(v);
             await refresh(v);
           }}
-          style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            padding: 8,
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
         >
           <option value="paused">Paused</option>
           <option value="active">Active</option>
@@ -101,23 +125,55 @@ export default function ProjectsScreen() {
 
         <button
           onClick={() => refresh()}
-          style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
         >
           Refresh
         </button>
       </div>
 
+      {/* List */}
       <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
         {items.length === 0 ? (
-          <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 12, color: "#777" }}>
+          <div
+            style={{
+              padding: 12,
+              border: "1px solid #eee",
+              borderRadius: 12,
+              color: "#777",
+            }}
+          >
             No projects here.
           </div>
         ) : (
           items.map((p) => (
-            <div key={p.id} style={{ padding: 12, border: "1px solid #eee", borderRadius: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div
+              key={p.id}
+              style={{
+                padding: 12,
+                border: "1px solid #eee",
+                borderRadius: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
                 <div>
-                  <div style={{ fontWeight: 600 }}>{p.name}</div>
+                  <div style={{ fontWeight: 600 }}>
+                    <Link
+                      to={`/projects/${p.id}`}
+                      style={{ color: "inherit", textDecoration: "none" }}
+                    >
+                      {p.name}
+                    </Link>
+                  </div>
                   <div style={{ fontSize: 12, color: "#777" }}>
                     {p.status} • {new Date(p.created_at).toLocaleString()}
                   </div>
@@ -127,21 +183,33 @@ export default function ProjectsScreen() {
                   <button
                     onClick={() => setStatus(p.id, "paused")}
                     disabled={p.status === "paused"}
-                    style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #ddd" }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                    }}
                   >
                     Pause
                   </button>
                   <button
                     onClick={() => setStatus(p.id, "active")}
                     disabled={p.status === "active"}
-                    style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #ddd" }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                    }}
                   >
                     Activate
                   </button>
                   <button
                     onClick={() => setStatus(p.id, "completed")}
                     disabled={p.status === "completed"}
-                    style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #ddd" }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                    }}
                   >
                     Complete
                   </button>

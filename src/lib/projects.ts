@@ -24,3 +24,7 @@ export function projectList(status?: ProjectStatus) {
 export function projectSetStatus(id: string, status: ProjectStatus) {
     return invoke<void>("project_set_status", { id, status });
 }
+
+export function projectGet(id: string) {
+  return invoke<ProjectItem>("project_get", { id });
+}

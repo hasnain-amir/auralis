@@ -161,3 +161,46 @@ pub async fn task_set_status(
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn task_list_by_project(
+    db: State<'_, Db>,
+    project_id: String,
+) -> Result<Vec<TaskItem>, String> {
+    let conn = db.0.lock().await;
+
+    let mut items: Vec<TaskItem> = Vec::new();
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, area_id, project_id, title, status, priority,
+                    due_at, scheduled_at, created_at, completed_at
+             FROM tasks
+             WHERE project_id = ?1
+             ORDER BY created_at DESC",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([project_id], |row| {
+            Ok(TaskItem {
+                id: row.get(0)?,
+                area_id: row.get(1)?,
+                project_id: row.get(2)?,
+                title: row.get(3)?,
+                status: row.get(4)?,
+                priority: row.get(5)?,
+                due_at: row.get(6)?,
+                scheduled_at: row.get(7)?,
+                created_at: row.get(8)?,
+                completed_at: row.get(9)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    for r in rows {
+        items.push(r.map_err(|e| e.to_string())?);
+    }
+
+    Ok(items)
+}

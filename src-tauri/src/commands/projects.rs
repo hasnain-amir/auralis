@@ -127,3 +127,30 @@ pub async fn project_set_status(
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn project_get(db: State<'_, Db>, id: String) -> Result<ProjectItem, String> {
+    let conn = db.0.lock().await;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, area_id, name, status, created_at
+             FROM projects
+             WHERE id = ?1",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let item = stmt
+        .query_row(params![id], |row| {
+            Ok(ProjectItem {
+                id: row.get(0)?,
+                area_id: row.get(1)?,
+                name: row.get(2)?,
+                status: row.get(3)?,
+                created_at: row.get(4)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    Ok(item)
+}
