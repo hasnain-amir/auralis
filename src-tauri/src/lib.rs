@@ -41,6 +41,11 @@ pub fn run() {
             commands::projects::project_get,
             commands::tasks::task_list_by_project,
             commands::tasks::task_set_project,
+            commands::notes::note_add,
+            commands::notes::note_list,
+            commands::notes::note_update,
+            commands::notes::note_delete,
+            commands::notes::note_get,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

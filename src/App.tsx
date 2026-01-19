@@ -5,6 +5,7 @@ import TasksScreen from "./screens/TasksScreen";
 import AreasScreen from "./screens/AreasScreen";
 import ProjectsScreen from "./screens/ProjectsScreen";
 import ProjectDetailScreen from "./screens/ProjectDetailScreen";
+import NotesScreen from "./screens/NotesScreen";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/areas" element={<AreasScreen />} />
           <Route path="/projects" element={<ProjectsScreen />} />
           <Route path="/projects/:id" element={<ProjectDetailScreen />} />
+          <Route path="/notes" element={<NotesScreen />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -58,6 +58,17 @@ export default function AppShell() {
             Projects
           </NavLink>
 
+          <NavLink
+            to="/notes"
+            style={({ isActive }) => ({
+            ...linkStyle,
+            border: "1px solid #eee",
+            background: isActive ? "#f5f5f5" : "transparent",
+            })}
+          >
+            Notes
+          </NavLink>
+
           <div style={{ marginTop: 8, fontSize: 12, color: "#777" }}>Coming soon</div>
           <div style={{ display: "grid", gap: 6 }}>
             <div style={{ ...linkStyle, border: "1px dashed #eee", color: "#999" }}>Projects</div>
