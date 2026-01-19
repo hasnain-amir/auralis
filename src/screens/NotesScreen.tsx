@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { noteAdd, noteDelete, noteList, noteUpdate, type NoteItem } from "../lib/notes";
+import {
+  noteAdd,
+  noteDelete,
+  noteList,
+  noteUpdate,
+  type NoteItem,
+} from "../lib/notes";
 import { projectList, type ProjectItem } from "../lib/projects";
+import { aiSummariseNote } from "../lib/ai";
 
 export default function NotesScreen() {
   const [err, setErr] = useState<string | null>(null);
 
   const [items, setItems] = useState<NoteItem[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = useMemo(
@@ -17,24 +25,22 @@ export default function NotesScreen() {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-
   async function refresh() {
-  setErr(null);
-  try {
-    const res = await noteList();
-    setItems(res);
+    setErr(null);
+    try {
+      const res = await noteList();
+      setItems(res);
 
-    const ps = await projectList();
-    setProjects(ps);
+      const ps = await projectList();
+      setProjects(ps);
 
-    if (selectedId && !res.some((n) => n.id === selectedId)) {
-      setSelectedId(null);
+      if (selectedId && !res.some((n) => n.id === selectedId)) {
+        setSelectedId(null);
+      }
+    } catch (e: any) {
+      setErr(String(e));
     }
-  } catch (e: any) {
-    setErr(String(e));
   }
-}
 
   useEffect(() => {
     refresh();
@@ -70,7 +76,13 @@ export default function NotesScreen() {
     setErr(null);
     setSaving(true);
     try {
-      await noteUpdate(selected.id, title, content, selected.area_id, selected.project_id);
+      await noteUpdate(
+        selected.id,
+        title,
+        content,
+        selected.area_id,
+        selected.project_id
+      );
       await refresh();
     } catch (e: any) {
       setErr(String(e));
@@ -94,15 +106,73 @@ export default function NotesScreen() {
     }
   }
 
+  async function summariseSelected() {
+    if (!selected) return;
+
+    setErr(null);
+    setSaving(true);
+    try {
+      const summary = await aiSummariseNote(selected.id);
+
+      const appended =
+        (content.trim() ? content.trim() + "\n\n" : "") +
+        "— AI Summary —\n" +
+        summary;
+
+      setContent(appended);
+
+      await noteUpdate(
+        selected.id,
+        title,
+        appended,
+        selected.area_id,
+        selected.project_id
+      );
+
+      await refresh();
+    } catch (e: any) {
+      setErr(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function setProject(projectId: string | null) {
+    if (!selected) return;
+    setErr(null);
+    setSaving(true);
+    try {
+      await noteUpdate(
+        selected.id,
+        title,
+        content,
+        selected.area_id,
+        projectId
+      );
+      await refresh();
+    } catch (e: any) {
+      setErr(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div style={{ maxWidth: 1200 }}>
       <h1 style={{ margin: "0 0 12px" }}>Notes</h1>
       {err && <p style={{ color: "crimson" }}>{err}</p>}
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 12 }}>
-        {/* Left: list */}
+        {/* LEFT: LIST */}
         <div style={{ border: "1px solid #eee", borderRadius: 12, overflow: "hidden" }}>
-          <div style={{ padding: 10, borderBottom: "1px solid #eee", display: "flex", gap: 8 }}>
+          <div
+            style={{
+              padding: 10,
+              borderBottom: "1px solid #eee",
+              display: "flex",
+              gap: 8,
+            }}
+          >
             <button
               onClick={createNew}
               disabled={saving}
@@ -139,11 +209,12 @@ export default function NotesScreen() {
                   >
                     <div style={{ fontWeight: 600 }}>{n.title}</div>
                     {n.project_id && (
-                        <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
-                            Project: {projects.find((p) => p.id === n.project_id)?.name ?? "—"}
-                        </div>
+                      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                        Project:{" "}
+                        {projects.find((p) => p.id === n.project_id)?.name ?? "—"}
+                      </div>
                     )}
-                    <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
+                    <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>
                       Updated {new Date(n.updated_at).toLocaleString()}
                     </div>
                   </button>
@@ -153,7 +224,7 @@ export default function NotesScreen() {
           </div>
         </div>
 
-        {/* Right: editor */}
+        {/* RIGHT: EDITOR */}
         <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
           {!selected ? (
             <div style={{ color: "#777" }}>
@@ -161,40 +232,14 @@ export default function NotesScreen() {
             </div>
           ) : (
             <>
-              <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-                <div style={{ marginTop: 10 }}>
-                    <label style={{ fontSize: 12, color: "#666" }}>Project</label>
-                    <select
-                        value={selected.project_id ?? ""}
-                        onChange={(e) => {
-                            const v = e.target.value;
-                            setSelectedId(selected.id);
-                            noteUpdate(
-                                selected.id,
-                                title,
-                                content,
-                                selected.area_id,
-                                 v === "" ? null : v
-                            )
-                                .then(refresh)
-                                .catch((e) => setErr(String(e)));
-                        }}
-                        style={{
-                        marginTop: 4,
-                        padding: 8,
-                        borderRadius: 10,
-                        border: "1px solid #ddd",
-                        width: "100%",
-                        }}
-                    >
-                        <option value="">No project</option>
-                        {projects.map((p) => (
-                        <option key={p.id} value={p.id}>
-                            {p.name}
-                        </option>
-                    ))}
-            </select>
-        </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
                 <div style={{ flex: 1 }}>
                   <input
                     value={title}
@@ -213,7 +258,14 @@ export default function NotesScreen() {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={summariseSelected}
+                    disabled={saving}
+                    style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd" }}
+                  >
+                    Summarise
+                  </button>
                   <button
                     onClick={save}
                     disabled={saving}
@@ -229,6 +281,31 @@ export default function NotesScreen() {
                     Delete
                   </button>
                 </div>
+              </div>
+
+              {/* Project selector */}
+              <div style={{ marginTop: 12 }}>
+                <label style={{ fontSize: 12, color: "#666" }}>Project</label>
+                <select
+                  value={selected.project_id ?? ""}
+                  onChange={(e) =>
+                    setProject(e.target.value === "" ? null : e.target.value)
+                  }
+                  style={{
+                    marginTop: 4,
+                    padding: 8,
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
+                    width: "100%",
+                  }}
+                >
+                  <option value="">No project</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <textarea

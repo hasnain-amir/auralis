@@ -1,3 +1,4 @@
+mod ai;
 mod commands;
 mod db;
 
@@ -46,6 +47,7 @@ pub fn run() {
             commands::notes::note_update,
             commands::notes::note_delete,
             commands::notes::note_get,
+            commands::ai::ai_summarise_note,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

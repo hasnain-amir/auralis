@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod areas;
 pub mod inbox;
 pub mod notes;
