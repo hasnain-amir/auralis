@@ -34,3 +34,10 @@ export function taskSetStatus(id: string, status: TaskStatus) {
 export function taskListByProject(projectId: string) {
   return invoke<TaskItem[]>("task_list_by_project", { projectId });
 }
+
+export function taskSetProject(id: string, projectId: string | null) {
+  return invoke<void>("task_set_project", {
+    id,
+    projectId,
+  });
+}

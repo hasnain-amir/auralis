@@ -204,3 +204,25 @@ pub async fn task_list_by_project(
 
     Ok(items)
 }
+
+#[tauri::command]
+pub async fn task_set_project(
+    db: State<'_, Db>,
+    id: String,
+    project_id: Option<String>, // null to unassign
+) -> Result<(), String> {
+    let conn = db.0.lock().await;
+
+    let updated = conn
+        .execute(
+            "UPDATE tasks SET project_id = ?1 WHERE id = ?2",
+            params![project_id, id],
+        )
+        .map_err(|e| e.to_string())?;
+
+    if updated == 0 {
+        return Err("Task not found".into());
+    }
+
+    Ok(())
+}
