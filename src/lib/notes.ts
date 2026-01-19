@@ -56,3 +56,4 @@ export function noteDelete(id: string) {
 export function noteGet(id: string) {
   return invoke<NoteItem>("note_get", { id });
 }
+

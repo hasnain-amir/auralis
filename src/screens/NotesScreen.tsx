@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { noteAdd, noteDelete, noteList, noteUpdate, type NoteItem } from "../lib/notes";
+import { projectList, type ProjectItem } from "../lib/projects";
 
 export default function NotesScreen() {
   const [err, setErr] = useState<string | null>(null);
@@ -16,19 +17,24 @@ export default function NotesScreen() {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+
   async function refresh() {
-    setErr(null);
-    try {
-      const res = await noteList();
-      setItems(res);
-      // keep selection if possible
-      if (selectedId && !res.some((n) => n.id === selectedId)) {
-        setSelectedId(null);
-      }
-    } catch (e: any) {
-      setErr(String(e));
+  setErr(null);
+  try {
+    const res = await noteList();
+    setItems(res);
+
+    const ps = await projectList();
+    setProjects(ps);
+
+    if (selectedId && !res.some((n) => n.id === selectedId)) {
+      setSelectedId(null);
     }
+  } catch (e: any) {
+    setErr(String(e));
   }
+}
 
   useEffect(() => {
     refresh();
@@ -132,6 +138,11 @@ export default function NotesScreen() {
                     }}
                   >
                     <div style={{ fontWeight: 600 }}>{n.title}</div>
+                    {n.project_id && (
+                        <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                            Project: {projects.find((p) => p.id === n.project_id)?.name ?? "—"}
+                        </div>
+                    )}
                     <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
                       Updated {new Date(n.updated_at).toLocaleString()}
                     </div>
@@ -151,6 +162,39 @@ export default function NotesScreen() {
           ) : (
             <>
               <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
+                <div style={{ marginTop: 10 }}>
+                    <label style={{ fontSize: 12, color: "#666" }}>Project</label>
+                    <select
+                        value={selected.project_id ?? ""}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectedId(selected.id);
+                            noteUpdate(
+                                selected.id,
+                                title,
+                                content,
+                                selected.area_id,
+                                 v === "" ? null : v
+                            )
+                                .then(refresh)
+                                .catch((e) => setErr(String(e)));
+                        }}
+                        style={{
+                        marginTop: 4,
+                        padding: 8,
+                        borderRadius: 10,
+                        border: "1px solid #ddd",
+                        width: "100%",
+                        }}
+                    >
+                        <option value="">No project</option>
+                        {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                            {p.name}
+                        </option>
+                    ))}
+            </select>
+        </div>
                 <div style={{ flex: 1 }}>
                   <input
                     value={title}
