@@ -35,6 +35,9 @@ pub fn run() {
             commands::areas::area_add,
             commands::areas::area_list,
             commands::areas::area_set_active,
+            commands::projects::project_add,
+            commands::projects::project_list,
+            commands::projects::project_set_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
