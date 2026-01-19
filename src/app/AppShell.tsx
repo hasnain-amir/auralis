@@ -36,6 +36,16 @@ export default function AppShell() {
           >
             Tasks
           </NavLink>
+          <NavLink
+            to="/areas"
+            style={({ isActive }) => ({
+            ...linkStyle,
+            border: "1px solid #eee",
+            background: isActive ? "#f5f5f5" : "transparent",
+            })}
+>
+  Areas
+</NavLink>
 
           <div style={{ marginTop: 8, fontSize: 12, color: "#777" }}>Coming soon</div>
           <div style={{ display: "grid", gap: 6 }}>

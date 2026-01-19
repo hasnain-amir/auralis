@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AppShell from "./app/AppShell";
 import InboxScreen from "./screens/InboxScreen";
 import TasksScreen from "./screens/TasksScreen";
+import AreasScreen from "./screens/AreasScreen";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/inbox" replace />} />
           <Route path="/inbox" element={<InboxScreen />} />
           <Route path="/tasks" element={<TasksScreen />} />
+          <Route path="/areas" element={<AreasScreen />} />
         </Route>
       </Routes>
     </BrowserRouter>
